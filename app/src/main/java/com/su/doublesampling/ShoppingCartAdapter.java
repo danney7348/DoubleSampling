@@ -17,14 +17,14 @@ import java.util.List;
 public class ShoppingCartAdapter extends RecyclerView.Adapter<ShoppingCartAdapter.MyViewHolder> {
 
     private Context context;
-    private List<ProductBean> list;
+    private List<ProductBean1.DataBean> list;
     private OnItemChickListener onItemChickListener;
 
     public void setOnItemChickListener(OnItemChickListener onItemChickListener) {
         this.onItemChickListener = onItemChickListener;
     }
 
-    public ShoppingCartAdapter(Context context, List<ProductBean> list) {
+    public ShoppingCartAdapter(Context context,List<ProductBean1.DataBean> list) {
         this.context = context;
         this.list = list;
     }
@@ -37,29 +37,29 @@ public class ShoppingCartAdapter extends RecyclerView.Adapter<ShoppingCartAdapte
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        final ProductBean productBean = list.get(position);
-        isSellerChecked(holder, productBean);
-
-        holder.mTvSellerName.setText(productBean.sellerName);
+        System.out.println(list.get(position).getSellerid()+"+++++++++++++++++++++++++++++++++");
+        final ProductBean1.DataBean dataBean = list.get(position);
+        isSellerChecked(holder, dataBean);
+        holder.mTvSellerName.setText(dataBean.getSellerName());
         holder.mClassifyChildGridRecycle.setLayoutManager(new LinearLayoutManager(context));
-        final ShoppingCartChildAdapter adapter = new ShoppingCartChildAdapter(context, productBean.list);
+        final ShoppingCartChildAdapter adapter = new ShoppingCartChildAdapter(context, dataBean.getList());
         holder.mClassifyChildGridRecycle.setAdapter(adapter);
         if (onItemChickListener != null){
             adapter.setOnItemCheckListener(new ShoppingCartChildAdapter.OnItemCheckListener() {
                 @Override
                 public void onCheckListener(int position) {
-                    isSellerChecked(holder, productBean);
+                    isSellerChecked(holder, dataBean);
                     onItemChickListener.onChilcCheckChangeListener(holder.getLayoutPosition(), position);
                 }
             });
             holder.mSellerCb.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    for (ProductBean.DataBean dataBean : productBean.list) {
-                        if (holder.mSellerCb.isChecked()){
-                            dataBean.isSelect = true;
-                        } else {
-                            dataBean.isSelect = false;
+                    for (ProductBean1.DataBean.ListBean listBean : dataBean.getList()) {
+                        if(holder.mSellerCb.isChecked()){
+                            listBean.isSelect = true;
+                        }else {
+                            listBean.isSelect = false;
                         }
                     }
                     adapter.notifyDataSetChanged();
@@ -70,10 +70,10 @@ public class ShoppingCartAdapter extends RecyclerView.Adapter<ShoppingCartAdapte
 
     }
 
-    private void isSellerChecked(MyViewHolder holder, ProductBean productBean) {
+    private void isSellerChecked(MyViewHolder holder,ProductBean1.DataBean dataBean) {
         boolean flag = true;
-        for (ProductBean.DataBean dataBean : productBean.list) {
-            if (!dataBean.isSelect) {
+        for (ProductBean1.DataBean.ListBean listBean : dataBean.getList()) {
+            if(!listBean.isSelect){
                 flag = false;
                 break;
             }
@@ -102,7 +102,6 @@ public class ShoppingCartAdapter extends RecyclerView.Adapter<ShoppingCartAdapte
 
     public interface OnItemChickListener {
         void onChilcCheckChangeListener(int sellerPosition, int productPosition);
-
         void onItemClickListener(int sellerPosition);
     }
 }

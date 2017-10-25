@@ -11,9 +11,15 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -23,11 +29,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mBtnPay;
     private LinearLayout mShoppingCatBottom;
     private RecyclerView mShoppingCatSellerRecycler;
-    private List<ProductBean> list;
     private ShoppingCartAdapter adapter;
     private double sumPrice;
     private int sumNum;
     private DecimalFormat decimalFormat;
+    private List<ProductBean1.DataBean> list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,36 +42,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initView();
         initData();
         decimalFormat = new DecimalFormat("#0.00");
-        mShoppingCatSellerRecycler.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ShoppingCartAdapter(this, list);
-        mShoppingCatSellerRecycler.setAdapter(adapter);
-        adapter.setOnItemChickListener(new ShoppingCartAdapter.OnItemChickListener() {
-            @Override
-            public void onChilcCheckChangeListener(int sellerPosition, int productPosition) {
-                if (list.get(sellerPosition).list.get(productPosition).isSelect) {
-                    sumPrice = sumPrice + list.get(sellerPosition).list.get(productPosition).price;
-                    sumNum++;
-                } else {
-                    sumPrice = sumPrice - list.get(sellerPosition).list.get(productPosition).price;
-                    sumNum--;
-                }
-                mSumPrice.setText(decimalFormat.format(sumPrice));
-                mBtnPay.setText("去结算(" + sumNum + ")");
-                isCheckAllChecked();
-            }
-
-            @Override
-            public void onItemClickListener(int sellerPosition) {
-            }
-        });
 
     }
-
     private void isCheckAllChecked() {
         boolean flag = true;
-        for (ProductBean productBean : list) {
-            for (ProductBean.DataBean dataBean : productBean.list) {
-                if (!dataBean.isSelect) {
+        for (ProductBean1.DataBean dataBean : list) {
+            for (ProductBean1.DataBean.ListBean listBean : dataBean.getList()) {
+                if(!listBean.isSelect){
                     flag = false;
                     break;
                 }
@@ -74,14 +57,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mCheckAll.setChecked(flag);
     }
     private void initData() {
-        list = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            List<ProductBean.DataBean> dataBeen = new ArrayList<>();
-            for (int j = 0; j < 3; j++) {
-                dataBeen.add(new ProductBean.DataBean("商品" + j, 10.2 * (j + 1), false));
+        Okutils okutils = new Okutils();
+        okutils.getdata("http://120.27.23.105/product/getCarts?uid=170", new Okutils.Backquer() {
+            @Override
+            public void onfailure(Call call, IOException e) {
             }
-            list.add(new ProductBean("商家" + i, dataBeen));
-        }
+            @Override
+            public void onresponse(Call call, Response response) {
+
+                try {
+                    String string = response.body().string();
+                    Gson gson = new Gson();
+                    ProductBean1 productBean1 = gson.fromJson(string, ProductBean1.class);
+                    list = productBean1.getData();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setData();
+                        }
+                    });
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+    }
+
+    private void setData() {
+        mShoppingCatSellerRecycler.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new ShoppingCartAdapter(this, list);
+        mShoppingCatSellerRecycler.setAdapter(adapter);
+        adapter.setOnItemChickListener(new ShoppingCartAdapter.OnItemChickListener() {
+            @Override
+            public void onChilcCheckChangeListener(int sellerPosition, int productPosition) {
+                if (list.get(sellerPosition).getList().get(productPosition).isSelect) {
+                    sumPrice = sumPrice + list.get(sellerPosition).getList().get(productPosition).getBargainPrice();
+                    sumNum++;
+                } else {
+                    sumPrice = sumPrice - list.get(sellerPosition).getList().get(productPosition).getBargainPrice();
+                    sumNum--;
+                }
+                mSumPrice.setText(decimalFormat.format(sumPrice));
+                mBtnPay.setText("去结算(" + sumNum + ")");
+                isCheckAllChecked();
+            }
+            @Override
+            public void onItemClickListener(int sellerPosition) {
+            }
+        });
     }
 
     private void initView() {
@@ -110,18 +135,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void checkAll() {
 
-        for (ProductBean productBean : list) {
-            for (ProductBean.DataBean dataBean : productBean.list) {
-                if (mCheckAll.isChecked()) {
-                    if (!dataBean.isSelect) {
-                        dataBean.isSelect = true;
-                        sumPrice = sumPrice + dataBean.price;
+        for (ProductBean1.DataBean dataBean : list) {
+            for (ProductBean1.DataBean.ListBean listBean : dataBean.getList()) {
+                if(mCheckAll.isChecked()){
+                    if (!listBean.isSelect) {
+                        listBean.isSelect = true;
+                        sumPrice = sumPrice + listBean.getBargainPrice();
                         sumNum++;
                     }
-                } else {
-                    if (dataBean.isSelect) {
-                        dataBean.isSelect = false;
-                        sumPrice = sumPrice - dataBean.price;
+                }else {
+                    if(listBean.isSelect){
+                        listBean.isSelect = false;
+                        sumPrice = sumPrice - listBean.getBargainPrice();
                         sumNum--;
                     }
                 }
@@ -130,6 +155,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         adapter.notifyDataSetChanged();
         mSumPrice.setText(decimalFormat.format(sumPrice));
         mBtnPay.setText("去结算(" + sumNum + ")");
-
     }
 }

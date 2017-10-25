@@ -23,14 +23,14 @@ import java.util.List;
 public class ShoppingCartChildAdapter extends RecyclerView.Adapter<ShoppingCartChildAdapter.MyViewHolder> {
 
     private Context context;
-    private List<ProductBean.DataBean> list;
+    private List<ProductBean1.DataBean.ListBean> list;
     private OnItemCheckListener onItemCheckListener;
 
     public void setOnItemCheckListener(OnItemCheckListener onItemCheckListener) {
         this.onItemCheckListener = onItemCheckListener;
     }
 
-    public ShoppingCartChildAdapter(Context context, List<ProductBean.DataBean> list) {
+    public ShoppingCartChildAdapter(Context context,List<ProductBean1.DataBean.ListBean> list) {
         this.context = context;
         this.list = list;
     }
@@ -43,8 +43,8 @@ public class ShoppingCartChildAdapter extends RecyclerView.Adapter<ShoppingCartC
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
-        final ProductBean.DataBean dataBean = list.get(position);
-        if (dataBean.isSelect) {
+        final ProductBean1.DataBean.ListBean listBean = list.get(position);
+        if (listBean.isSelect) {
             holder.mItemCb.setChecked(true);
         } else {
             holder.mItemCb.setChecked(false);
@@ -56,19 +56,18 @@ public class ShoppingCartChildAdapter extends RecyclerView.Adapter<ShoppingCartC
                 Toast.makeText(context, "amount_view"+amount, Toast.LENGTH_SHORT).show();
             }
         });
-        holder.mTvProductTitle.setText(dataBean.producrName);
+        holder.mTvProductTitle.setText(listBean.getTitle());
         DecimalFormat decimalFormat = new DecimalFormat("#0.00");
-        holder.mProductPrice.setText(decimalFormat.format(dataBean.price));
+        holder.mProductPrice.setText(decimalFormat.format(listBean.getBargainPrice()));
         if (onItemCheckListener != null) {
             holder.mItemCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    dataBean.isSelect = b;
+                    listBean.isSelect = b;
                     onItemCheckListener.onCheckListener(holder.getLayoutPosition());
                 }
             });
         }
-
     }
 
     @Override
